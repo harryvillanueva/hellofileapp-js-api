@@ -1,15 +1,16 @@
 package file;
 
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
-@Controller
+
+@RestController
+@CrossOrigin(origins = "*")
 public class FileController {
 
     private final StorageService storageService;
@@ -18,28 +19,20 @@ public class FileController {
         this.storageService = storageService;
     }
 
-    @GetMapping("/")
-    public String showUploadForm() {
-        // Devuelve el nombre del archivo HTML (sin .html)
-        // Spring Boot lo buscará en 'src/main/resources/templates/uploadForm.html'
-        return "index";
-    }
 
     @PostMapping("/")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) {
 
         boolean success = storageService.store(file);
 
-        if (success){
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "¡Fichero subido con éxito: " + file.getOriginalFilename() + "!");
+        if (success) {
+            // Devuelve un 200 OK con un mensaje de éxito en el cuerpo
+            String message = "¡Fichero subido con éxito: " + file.getOriginalFilename() + "!";
+            return ResponseEntity.status(HttpStatus.OK).body(message);
         } else {
-            // 5. Añadir mensaje de error
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Error al subir el fichero: " + file.getOriginalFilename() + ". (¿Quizás estaba vacío?)");
+            // Devuelve un 400 Bad Request (o 500) con un mensaje de error
+            String message = "Error al subir el fichero: " + file.getOriginalFilename() + ". (¿Quizás estaba vacío?)";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
         }
-
-
-        return "redirect:/";
     }
 }
